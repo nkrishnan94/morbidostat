@@ -23,7 +23,7 @@ import Adafruit_ADS1x15
 time_between_pumps = 0.5  # how often to activate pumps, in minutes
 OD_thr = 15  # threshold above which to activate drug pump
 time_between_ODs = 2  # how often to gather OD data, in seconds
-time_between_writes = 1  # how often to write out OD data, in minutes
+time_between_writes = 10  # how often to write out OD data, in minutes
 running_data = []  # the list which will hold our 2-tuples of time and OD
 
 # setup the GPIO pins to control the pumps
@@ -42,7 +42,7 @@ photoreceptor_channel = 0
 
 # Read data from the ADC
 def get_OD():
-    value = adc.read_adc(photoreceptor_channel)
+    value = adc.read_adc(photoreceptor_channel, gain=8)
     return value
 
 
@@ -56,7 +56,7 @@ def activate_pump(pump):
 
 # write data
 def write_data(data):
-    filename = str(datetime.datetime.now()) + '.csv'
+    filename = 'data/' + str(datetime.datetime.now()) + '.csv'
     print('writing data to', filename)
     with open(filename, 'w') as output:
         writer = csv.writer(output)
@@ -78,7 +78,7 @@ while loops < 32:
     OD = get_OD()
     now = datetime.datetime.now()
     running_data.append((now, OD))
-    print('%02s:%02s:%02s' % (now.hour, now.minute, now.second), OD)
+    print('%2s:%2s:%2s' % (now.hour, now.minute, now.second), OD)
 
     # activate pumps if needed and it's time (threaded to preserve time b/w ODs if this takes > time_between_ODs)
     if elapsed_loop_time % (time_between_pumps * 60) < 1:
