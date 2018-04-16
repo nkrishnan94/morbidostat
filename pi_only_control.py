@@ -59,9 +59,9 @@ def write_data(data):
     filename = str(datetime.datetime.now()) + '.csv'
     print('writing data to', filename)
     with open(filename, 'w') as output:
-        writer = csv.writer(output, lineterminator='\n')
+        writer = csv.writer(output)
         for timepoint in data:
-            writer.writerow([timepoint])
+            writer.writerow(timepoint)
 
 
 elapsed_loop_time = 0
