@@ -69,7 +69,7 @@ elapsed_loop_time = 0
 loops = 0
 
 # control loop
-while loops < 1800:
+while loops < 5400:
     loops += 1
 
     # note the time the loop starts
@@ -107,3 +107,7 @@ while loops < 1800:
         print('warning: loop took longer than requested OD interval')
     time.sleep(time_between_ODs - interval)
     elapsed_loop_time += time_between_ODs
+
+write_data(running_data)
+GPIO.cleanup()
+
