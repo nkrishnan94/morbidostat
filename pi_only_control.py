@@ -11,20 +11,19 @@ converter attached to one of the SPI ports on the RPi.
 Data will be saved on the RPi and stored in the cloud. Using the Slack API, we will be able to query the RPi to find
 out how the experiment is progressing."""
 
-
 import time
 import datetime
 import csv
 import threading
 
-import Adafruit_ADS1x15
 import RPi.GPIO as GPIO
+import Adafruit_ADS1x15
 
 # define experimental variables
 time_between_pumps = 0.5  # how often to activate pumps, in minutes
 OD_thr = 15  # threshold above which to activate drug pump
 time_between_ODs = 2  # how often to gather OD data, in seconds
-time_between_writes = 0.5  # how often to write out OD data, in minutes
+time_between_writes = 1  # how often to write out OD data, in minutes
 running_data = []  # the list which will hold our 2-tuples of time and OD
 
 # setup the GPIO pins to control the pumps
@@ -48,7 +47,7 @@ def get_OD():
 
 
 # activate the pumps
-pump_activation_times = {P_drug: 1, P_nut: 1, P_waste: 1}  # how long to run the pumps for, in seconds
+pump_activation_times = {P_drug: 2.5, P_nut: 2.5, P_waste: 2.5}  # in seconds
 def activate_pump(pump):
     GPIO.output(pump, 1)
     time.sleep(pump_activation_times[pump])
@@ -60,43 +59,44 @@ def write_data(data):
     filename = str(datetime.datetime.now()) + '.csv'
     print('writing data to', filename)
     with open(filename, 'w') as output:
-            writer = csv.writer(output, lineterminator='\n')
-            for timepoint in running_data:
-                writer.writerow([timepoint])
+        writer = csv.writer(output, lineterminator='\n')
+        for timepoint in data:
+            writer.writerow([timepoint])
 
 
 elapsed_loop_time = 0
+loops = 0
 
 # control loop
-while True:
+while loops < 32:
+    loops += 1
 
     # note the time the loop starts
     beginning = time.time()
 
     # read OD data to be used for both controlling and saving during this loop
     OD = get_OD()
-    running_data.append((beginning, OD))
-    print(running_data[-1])
-    print(elapsed_loop_time)
+    now = datetime.datetime.now()
+    running_data.append((now, OD))
+    print('%02s:%02s:%02s' % (now.hour, now.minute, now.second), OD)
 
     # activate pumps if needed and it's time (threaded to preserve time b/w ODs if this takes > time_between_ODs)
     if elapsed_loop_time % (time_between_pumps * 60) < 1:
         print('activating pumps')
         if OD > OD_thr:
-            threading.Thread(target=activate_pump, args=(P_drug))
+            threading.Thread(target=activate_pump, args=(P_drug,)).start()
         else:
-            threading.Thread(target=activate_pump, args=(P_nut))
+            threading.Thread(target=activate_pump, args=(P_nut,)).start()
 
-        threading.Thread(target=activate_pump, args=(P_waste))
+        threading.Thread(target=activate_pump, args=(P_waste,)).start()
 
     # save the data to disk if it's time (threaded to preserve time b/w ODs if this takes > time_between_ODs)
-    if time_between_writes % (time_between_writes * 60) < 1:
-        threading.Thread(target=write_data, args=(running_data))
+    if elapsed_loop_time % (time_between_writes * 60) < 1:
+        print('saving to disk')
+        threading.Thread(target=write_data, args=(running_data,)).start()
         # clear the data
         running_data = []
-    
-    GPIO.cleanup()
-    
+
     # note the time the functions end
     end = time.time()
     interval = beginning - end
