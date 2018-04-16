@@ -20,8 +20,8 @@ import RPi.GPIO as GPIO
 import Adafruit_ADS1x15
 
 # define experimental variables
-time_between_pumps = 0.5  # how often to activate pumps, in minutes
-OD_thr = 15  # threshold above which to activate drug pump
+time_between_pumps = 5  # how often to activate pumps, in minutes
+OD_thr = -1000  # threshold above which to activate drug pump
 time_between_ODs = 2  # how often to gather OD data, in seconds
 time_between_writes = 10  # how often to write out OD data, in minutes
 running_data = []  # the list which will hold our 2-tuples of time and OD
