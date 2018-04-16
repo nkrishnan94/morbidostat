@@ -76,10 +76,12 @@ while True:
     # read OD data to be used for both controlling and saving during this loop
     OD = get_OD()
     running_data.append((beginning, OD))
-    print(OD)
+    print(running_data[-1])
+    print(elapsed_loop_time)
 
     # activate pumps if needed and it's time (threaded to preserve time b/w ODs if this takes > time_between_ODs)
     if elapsed_loop_time % (time_between_pumps * 60) < 1:
+        print('activating pumps')
         if OD > OD_thr:
             threading.Thread(target=activate_pump, args=(P_drug))
         else:
@@ -92,7 +94,9 @@ while True:
         threading.Thread(target=write_data, args=(running_data))
         # clear the data
         running_data = []
-
+    
+    GPIO.cleanup()
+    
     # note the time the functions end
     end = time.time()
     interval = beginning - end
