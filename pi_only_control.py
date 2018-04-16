@@ -17,13 +17,14 @@ import csv
 import threading
 
 import RPi.GPIO as GPIO
+import psutil
 import Adafruit_ADS1x15
 
 # define experimental variables
 time_between_pumps = 5  # how often to activate pumps, in minutes
 OD_thr = -1000  # threshold above which to activate drug pump
 time_between_ODs = 2  # how often to gather OD data, in seconds
-time_between_writes = 10  # how often to write out OD data, in minutes
+time_between_writes = 30  # how often to write out OD data, in minutes
 running_data = []  # the list which will hold our 2-tuples of time and OD
 
 # setup the GPIO pins to control the pumps
@@ -68,7 +69,7 @@ elapsed_loop_time = 0
 loops = 0
 
 # control loop
-while loops < 32:
+while loops < 1800:
     loops += 1
 
     # note the time the loop starts
@@ -77,7 +78,7 @@ while loops < 32:
     # read OD data to be used for both controlling and saving during this loop
     OD = get_OD()
     now = datetime.datetime.now()
-    running_data.append((now, OD))
+    running_data.append((now, OD, psutil.virtual_memory().percent, psutil.cpu_percent(percpu=True)))
     print('%2s:%2s:%2s' % (now.hour, now.minute, now.second), OD)
 
     # activate pumps if needed and it's time (threaded to preserve time b/w ODs if this takes > time_between_ODs)
